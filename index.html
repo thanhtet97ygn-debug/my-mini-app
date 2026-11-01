@@ -11,7 +11,6 @@
         body, html { width: 100%; height: 100%; overflow: hidden; background: #000; color: #fff; }
         #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        /* HUD UI */
         .hud-panel {
             position: absolute; top: 10px; left: 10px; right: 10px;
             display: flex; justify-content: space-between; align-items: center;
@@ -24,7 +23,6 @@
         }
         .line-badge { background: #c0392b; border-color: #e74c3c; }
 
-        /* Route Selector Modal */
         #route-modal {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.92); z-index: 100; display: flex;
@@ -42,7 +40,6 @@
         }
         .route-btn:active { background: #2ecc71; }
 
-        /* Alerts & Police */
         #alert-box {
             position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
             background: #c0392b; padding: 8px 16px; border-radius: 10px;
@@ -50,7 +47,6 @@
             text-align: center; border: 1px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
 
-        /* Touch Controls */
         .controls-layer {
             position: absolute; bottom: 15px; left: 0; width: 100%; height: 130px;
             z-index: 20; display: flex; justify-content: space-between; padding: 0 20px;
@@ -73,17 +69,16 @@
 
     <div class="hud-panel">
         <div class="badge line-badge" id="hud-line">YBS 1</div>
-        <div class="badge" id="hud-money">ဝင်ငွေ: 10,000 ကျပ်</div>
+        <div class="badge" id="hud-money">ဝင်ငွေ: 15,000 ကျပ်</div>
         <div class="badge" id="hud-speed">0 km/h</div>
     </div>
 
     <div id="alert-box">🚨 မီးနီဖြတ်လို့ သို့မဟုတ် မှတ်တိုင်ကျော်လို့ ရဲဖမ်းခံရပါပြီ! ဒဏ်ငွေ ၅,၀၀၀ ကျပ် ဖြတ်သည်။</div>
 
-    <!-- Route Selector Modal (YBS 1 to 27) -->
     <div id="route-modal">
         <div class="modal-card">
             <h2>🚌 YBS ယာဉ်လိုင်း ရွေးချယ်ပါ</h2>
-            <p style="margin: 6px 0 12px 0; font-size: 12px; color: #bdc3c7;">ရန်ကုန်မြို့ပြ ယာဉ်လိုင်း ၁ မှ ၂၇ အထိ[span_7](start_span)[span_7](end_span)[span_8](start_span)[span_8](end_span)[span_9](start_span)[span_9](end_span)[span_10](start_span)[span_10](end_span)[span_11](start_span)[span_11](end_span)[span_12](start_span)[span_12](end_span)[span_13](start_span)[span_13](end_span)</p>
+            <p style="margin: 6px 0 12px 0; font-size: 12px; color: #bdc3c7;">ရန်ကုန်မြို့ပြ ယာဉ်လိုင်း ၁ မှ ၂၇ အထိ</p>
             <div id="route-list-container"></div>
         </div>
     </div>
@@ -103,35 +98,34 @@
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.expand(); }
 
-        // YBS 1 to 27 Routes Data[span_14](start_span)[span_14](end_span)[span_15](start_span)[span_15](end_span)[span_16](start_span)[span_16](end_span)[span_17](start_span)[span_17](end_span)[span_18](start_span)[span_18](end_span)[span_19](start_span)[span_19](end_span)[span_20](start_span)[span_20](end_span)
         const ybsData = [
-            { id: 1, name: "YBS 1", route: "လှည်းကူးဈေး ⇄ ဌက" },[span_21](start_span)[span_21](end_span)
-            { id: 2, name: "YBS 2", route: "ယုဇနဥယျာဉ်မြို့တော် ⇄ အောင်မင်္ဂလာ" },[span_22](start_span)[span_22](end_span)
-            { id: 3, name: "YBS 3", route: "ယုဇနဥယျာဉ်(တာမွှေ) ⇄ ဆူးလေ" },[span_23](start_span)[span_23](end_span)
-            { id: 4, name: "YBS 4", route: "ရတနာနှင်းဆီအိမ်ရာ ⇄ ဆူးလေ" },[span_24](start_span)[span_24](end_span)
-            { id: 5, name: "YBS 5", route: "ရိုးမရိပ်သာ ⇄ ညောင်တုန်း" },[span_25](start_span)[span_25](end_span)
-            { id: 6, name: "YBS 6", route: "ဒဂုံဆိပ်ကမ်း ⇄ ဒဂုံရတနာအဝေးပြေး" },[span_26](start_span)[span_26](end_span)
-            { id: 7, name: "YBS 7", route: "တောင်ဒဂုံ ⇄ ဆူးလေ" },[span_27](start_span)[span_27](end_span)
-            { id: 8, name: "YBS 8", route: "ဒဂုံဆိပ်ကမ်း ⇄ လသာ" },[span_28](start_span)[span_28](end_span)
-            { id: 9, name: "YBS 9", route: "တိုင်းရင်းသားပညာတက္ကသိုလ် ⇄ မင်္ဂလာဈေး" },[span_29](start_span)[span_29](end_span)[span_30](start_span)[span_30](end_span)
-            { id: 10, name: "YBS 10", route: "တိုင်းရင်းသားကျေးရွာ ⇄ ဒဂုံတက္ကသိုလ်" },[span_31](start_span)[span_31](end_span)
-            { id: 11, name: "YBS 11", route: "အောင်မင်္ဂလာ ⇄ လသာ" },[span_32](start_span)[span_32](end_span)
-            { id: 12, name: "YBS 12", route: "မြောက်ဒဂုံ ⇄ ဆူးလေ" },[span_33](start_span)[span_33](end_span)
-            { id: 13, name: "YBS 13", route: "အရှေ့ဒဂုံ ⇄ ဗိုလ်တထောင်ဘုရား" },[span_34](start_span)[span_34](end_span)[span_35](start_span)[span_35](end_span)
-            { id: 14, name: "YBS 14", route: "ပါရမီ ⇄ သသင်မြုန်းပန်းခြံ" },[span_36](start_span)[span_36](end_span)
-            { id: 15, name: "YBS 15", route: "ဒဂုံတက္ကသိုလ် ⇄ သုဝဏ္ဏ" },[span_37](start_span)[span_37](end_span)
-            { id: 16, name: "YBS 16", route: "ရွှေပေါက်ကံ ⇄ ဒဂုံရတနာ" },[span_38](start_span)[span_38](end_span)
-            { id: 17, name: "YBS 17", route: "ရွှေပေါက်ကံ(ဆေးရုံ) ⇄ ဒဂုံရတနာ" },[span_39](start_span)[span_39](end_span)[span_40](start_span)[span_40](end_span)
-            { id: 18, name: "YBS 18", route: "ထောက်ကြန့် ⇄ တောင်ဒဂုံ(ယဉ်ကျေးမှု)" },[span_41](start_span)[span_41](end_span)
-            { id: 19, name: "YBS 19", route: "ရွှေပေါက်ကံ ⇄ သသင်မြုန်း" },[span_42](start_span)[span_42](end_span)
-            { id: 20, name: "YBS 20", route: "ဒဂုံရတနာ ⇄ သသင်မြုန်း" },[span_43](start_span)[span_43](end_span)
-            { id: 21, name: "YBS 21", route: "အနောက်ပိုင်းတက္ကသိုလ် ⇄ လသာ" },[span_44](start_span)[span_44](end_span)
-            { id: 22, name: "YBS 22", route: "အနောက်ပိုင်းတက္ကသိုလ် ⇄ သသင်မြုန်း" },[span_45](start_span)[span_45](end_span)
-            { id: 23, name: "YBS 23", route: "သသင်မြုန်းပန်းခြံ (ပုသိမ်လမ်း)" },[span_46](start_span)[span_46](end_span)
-            { id: 24, name: "YBS 24", route: "ဒဂုံတက္ကသိုလ် ⇄ ဗိုလ်တထောင်" },[span_47](start_span)[span_47](end_span)
-            { id: 25, name: "YBS 25", route: "ဒဂုံတက္ကသိုလ် ⇄ ဘိုးကလေးဈေး" },[span_48](start_span)[span_48](end_span)
-            { id: 26, name: "YBS 26", route: "ဒဂုံတက္ကသိုလ် ⇄ ဗိုလ်တထောင်" },[span_49](start_span)[span_49](end_span)
-            { id: 27, name: "YBS 27", route: "သုခဝတီအိမ်ရာ ⇄ မင်္ဂလာဈေး" }[span_50](start_span)[span_50](end_span)
+            { id: 1, name: "YBS 1", route: "လှည်းကူးဈေး ⇄ ဌက" },
+            { id: 2, name: "YBS 2", route: "ယုဇနဥယျာဉ်မြို့တော် ⇄ အောင်မင်္ဂလာ" },
+            { id: 3, name: "YBS 3", route: "ယုဇနဥယျာဉ်(တာမွှေ) ⇄ ဆူးလေ" },
+            { id: 4, name: "YBS 4", route: "ရတနာနှင်းဆီအိမ်ရာ ⇄ ဆူးလေ" },
+            { id: 5, name: "YBS 5", route: "ရိုးမရိပ်သာ ⇄ ညောင်တုန်း" },
+            { id: 6, name: "YBS 6", route: "ဒဂုံဆိပ်ကမ်း ⇄ ဒဂုံရတနာအဝေးပြေး" },
+            { id: 7, name: "YBS 7", route: "တောင်ဒဂုံ ⇄ ဆူးလေ" },
+            { id: 8, name: "YBS 8", route: "ဒဂုံဆိပ်ကမ်း ⇄ လသာ" },
+            { id: 9, name: "YBS 9", route: "တိုင်းရင်းသားပညာတက္កသိုလ် ⇄ မင်္ဂလာဈေး" },
+            { id: 10, name: "YBS 10", route: "တိုင်းရင်းသားကျေးရွာ ⇄ ဒဂုံတက္កသိုလ်" },
+            { id: 11, name: "YBS 11", route: "အောင်မင်္ဂလာ ⇄ လသာ" },
+            { id: 12, name: "YBS 12", route: "မြောက်ဒဂုံ ⇄ ဆူးလေ" },
+            { id: 13, name: "YBS 13", route: "အရှေ့ဒဂုံ ⇄ ဗိုလ်တထောင်ဘုရား" },
+            { id: 14, name: "YBS 14", route: "ပါရမီ ⇄ သသင်မြုန်းပန်းခြံ" },
+            { id: 15, name: "YBS 15", route: "ဒဂုံတက္កသိုလ် ⇄ သုဝဏ္ဏ" },
+            { id: 16, name: "YBS 16", route: "ရွှေပေါက်ကံ ⇄ ဒဂုံရတနာ" },
+            { id: 17, name: "YBS 17", route: "ရွှေပေါက်ကံ(ဆေးရုံ) ⇄ ဒဂုံရတနာ" },
+            { id: 18, name: "YBS 18", route: "ထောက်ကြန့် ⇄ တောင်ဒဂုံ(ယဉ်ကျေးမှု)" },
+            { id: 19, name: "YBS 19", route: "ရွှေပေါက်ကံ ⇄ သသင်မြုန်း" },
+            { id: 20, name: "YBS 20", route: "ဒဂုံရတနာ ⇄ သသင်မြုန်း" },
+            { id: 21, name: "YBS 21", route: "အနောက်ပိုင်းတက္កသိုလ် ⇄ လသာ" },
+            { id: 22, name: "YBS 22", route: "အနောက်ပိုင်းတက္កသိုလ် ⇄ သသင်မြုန်း" },
+            { id: 23, name: "YBS 23", route: "သသင်မြုန်းပန်းခြံ (ပုသိမ်လမ်း)" },
+            { id: 24, name: "YBS 24", route: "ဒဂုံတက္កသိုလ် ⇄ ဗိုလ်တထောင်" },
+            { id: 25, name: "YBS 25", route: "ဒဂုံတက္កသိုလ် ⇄ ဘိုးကလေးဈေး" },
+            { id: 26, name: "YBS 26", route: "ဒဂုံတက္កသိုလ် ⇄ ဗိုလ်တထောင်" },
+            { id: 27, name: "YBS 27", route: "သုခဝတီအိမ်ရာ ⇄ မင်္ဂလာဈေး" }
         ];
 
         const listContainer = document.getElementById('route-list-container');
@@ -166,7 +160,6 @@
             dirLight.position.set(20, 40, 20);
             scene.add(dirLight);
 
-            // Road Environment
             const roadMesh = new THREE.Mesh(
                 new THREE.PlaneGeometry(16, 3000),
                 new THREE.MeshLambertMaterial({ color: 0x333333 })
@@ -175,17 +168,15 @@
             roadMesh.position.z = 1500;
             scene.add(roadMesh);
 
-            // YBS Bus Model
             bus = new THREE.Group();
             const body = new THREE.Mesh(
                 new THREE.BoxGeometry(2.2, 2.2, 5.5),
-                new THREE.MeshLambertMaterial({ color: 0xf39c12 }) // YBS Yellow
+                new THREE.MeshLambertMaterial({ color: 0xf39c12 })
             );
             body.position.y = 1.3;
             bus.add(body);
             scene.add(bus);
 
-            // Bus Stops (မှတ်တိုင်များ)
             for (let z = 150; z < 2800; z += 220) {
                 const stop = new THREE.Mesh(
                     new THREE.BoxGeometry(1.5, 3, 1), 
@@ -196,7 +187,6 @@
                 busStops.push({ mesh: stop, z: z, collected: false });
             }
 
-            // Rival YBS Buses (အခြားယာဉ်လိုင်းများ ကျော်တက်ရန်)
             for (let i = 0; i < 6; i++) {
                 const rBus = new THREE.Mesh(
                     new THREE.BoxGeometry(2.2, 2.2, 5.5), 
@@ -255,7 +245,6 @@
             camera.position.set(bus.position.x * 0.5, bus.position.y + 4, bus.position.z - 10);
             camera.lookAt(bus.position.x, bus.position.y + 1, bus.position.z + 5);
 
-            // Rival Buses Movement
             rivalBuses.forEach(r => {
                 r.mesh.position.z += r.speed * 3;
                 if (r.mesh.position.z < bus.position.z - 25) {
@@ -263,16 +252,14 @@
                 }
             });
 
-            // Bus Stop & Passenger Pickup Check
             busStops.forEach(stop => {
                 let dist = stop.z - bus.position.z;
                 if (dist < -10 && !stop.collected) {
-                    // မှတ်တိုင်ကျော်ရပ်မိပါက ရဲဒဏ်ငွေ ၅၀၀၀ ကျပ် ဖြတ်မည်
                     triggerPoliceAlert();
                     stop.collected = true;
                 }
                 if (Math.abs(dist) < 5 && bus.position.x > 4 && speed < 0.04 && !stop.collected) {
-                    money += 2000; // မှတ်တိုင်ဝင်ရပ်၍ ခရီးသည်တင်ဆောင်ခ +၂၀၀၀ ကျပ်ရရှိ
+                    money += 2000;
                     document.getElementById('hud-money').innerText = `ဝင်ငွေ: ${money} ကျပ်`;
                     stop.collected = true;
                 }
