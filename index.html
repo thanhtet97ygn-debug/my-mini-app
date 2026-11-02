@@ -1,89 +1,108 @@
 <!doctype html>
 <html lang="my">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Yangon YBS 3D — Route Driver</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>MGC 195 Yangon Rush</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    :root{--gold:#ffc857;--ink:#111827;--red:#e63946;--cream:#fff7df}
-    *{box-sizing:border-box} html,body{margin:0;height:100%;overflow:hidden;background:#8bd3f7;font-family:system-ui,-apple-system,"Noto Sans Myanmar",sans-serif;color:#fff}
-    #game{position:fixed;inset:0} canvas{display:block}
-    .hud{position:fixed;inset:0;pointer-events:none}
-    .top{display:flex;justify-content:space-between;gap:8px;padding:12px;align-items:flex-start}
-    .panel{background:rgba(8,15,28,.78);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(8px);border-radius:14px;padding:10px 12px;box-shadow:0 8px 25px #0003}
-    .title{font-weight:900;color:var(--gold);font-size:16px}.small{font-size:12px;opacity:.82}.stat{font-weight:800;margin-top:3px}
-    #message{position:absolute;top:16%;left:50%;transform:translateX(-50%);font-weight:900;text-align:center;background:#111c;padding:10px 18px;border-radius:999px;opacity:0;transition:.25s}
-    #message.show{opacity:1}
-    #start{position:fixed;inset:0;display:grid;place-items:center;background:linear-gradient(#08111dcc,#0d1a28dd);z-index:5}
-    .card{width:min(460px,92vw);background:#fff;color:var(--ink);border-radius:24px;padding:24px;box-shadow:0 20px 70px #0008;text-align:center}
-    h1{margin:0 0 6px;font-size:30px}.tag{color:#9a6415;font-weight:800;margin-bottom:14px}.card p{line-height:1.55;color:#4b5563;font-size:14px}
-    select,button{font:inherit;border:0;border-radius:12px;padding:12px 15px;font-weight:800;cursor:pointer}select{width:100%;background:#f3f4f6;margin:8px 0 12px}button{background:var(--red);color:#fff;box-shadow:0 5px 0 #a51e2a}button:active{transform:translateY(3px);box-shadow:0 2px 0 #a51e2a}
-    #controls{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:12px;pointer-events:auto}
-    .ctrl{width:62px;height:54px;border-radius:17px;background:#111c;color:white;font-size:25px;border:1px solid #fff3;box-shadow:0 6px 18px #0004;touch-action:none}.ctrl.wide{font-size:14px;width:90px}.ctrl.gas{background:#16803a;color:#fff;font-size:14px;width:74px}
-    .legend{position:absolute;bottom:12px;left:12px;font-size:11px;background:#08101ccc;padding:8px 10px;border-radius:10px;max-width:260px}
-    .actionbar{position:absolute;right:12px;bottom:12px;display:flex;gap:8px;pointer-events:auto}.actionbar button{padding:8px 10px;background:#111c;border:1px solid #fff3;box-shadow:none;font-size:12px}
-    @media(max-width:600px){.top{padding:8px}.panel{padding:8px 10px}.title{font-size:13px}.small{font-size:10px}.ctrl{width:58px;height:50px}}
+    :root{--gold:#ffd166;--orange:#ff8c42;--navy:#10182d;--red:#ef476f;--green:#20c997}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{margin:0;height:100%;overflow:hidden;background:#10182d;font-family:system-ui,"Noto Sans Myanmar",sans-serif;color:#fff;touch-action:none}
+    #app{height:100dvh;display:grid;place-items:center;background:radial-gradient(circle at 50% 0,#3e6398 0,#192946 40%,#0d1425 100%)}
+    #gameWrap{position:relative;width:min(100vw,520px);height:100dvh;max-height:930px;overflow:hidden;background:#84c9ed;box-shadow:0 0 45px #0008}
+    canvas{display:block;width:100%;height:100%}
+    .hud{position:absolute;inset:0;pointer-events:none}
+    .topbar{display:flex;justify-content:space-between;gap:8px;padding:calc(10px + env(safe-area-inset-top)) 12px 0}
+    .pill{background:#10182ddd;border:1px solid #ffffff25;border-radius:15px;padding:8px 11px;backdrop-filter:blur(8px);box-shadow:0 7px 18px #0003}
+    .brand{font-weight:950;color:var(--gold);font-size:14px;letter-spacing:.3px}.muted{font-size:11px;opacity:.78}.value{font-weight:900;font-size:20px;line-height:1.05}
+    #pause{pointer-events:auto;background:#10182ddd;color:#fff;border:1px solid #ffffff30;border-radius:12px;padding:9px 11px;font-weight:900;cursor:pointer}
+    .hint{position:absolute;left:50%;top:23%;transform:translateX(-50%);width:max-content;max-width:84%;text-align:center;background:#10182dcc;border-radius:999px;padding:9px 15px;font-size:13px;font-weight:800;opacity:0;transition:.25s}.hint.show{opacity:1}
+    .bottom{position:absolute;left:0;right:0;bottom:calc(16px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:12px;pointer-events:auto}
+    .control{width:118px;height:58px;border:0;border-radius:19px;color:#fff;font-size:21px;font-weight:950;background:#10182ddd;box-shadow:0 7px 0 #070c18,0 12px 24px #0005;cursor:pointer;user-select:none}.control:active{transform:translateY(4px);box-shadow:0 3px 0 #070c18}.control.left{background:linear-gradient(#3a6ea5,#245078)}.control.right{background:linear-gradient(#e96b4e,#a63836)}
+    #start,#gameover{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(#0c1426c9,#0c1426ef);z-index:4;padding:20px}
+    .card{width:min(420px,92%);padding:25px 22px;border-radius:27px;background:linear-gradient(155deg,#fffdf2,#ffe8bc);color:#17213a;text-align:center;box-shadow:0 25px 70px #0009;border:2px solid #ffffff80}.card h1{margin:0;color:#b95426;font-size:31px;letter-spacing:-1px}.card h2{margin:0;color:#b95426;font-size:28px}.card .sub{font-weight:900;color:#825225;margin:7px 0 15px}.card p{font-size:14px;line-height:1.6;color:#465269;margin:10px 0 17px}.primary{width:100%;padding:14px;border:0;border-radius:15px;background:linear-gradient(90deg,#f26b4b,#e83965);color:#fff;font-weight:950;font-size:16px;box-shadow:0 5px 0 #a72842;cursor:pointer}.primary:active{transform:translateY(3px);box-shadow:0 2px 0 #a72842}.stats{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0}.statbox{background:#fff8;border-radius:13px;padding:10px}.statbox b{display:block;font-size:20px;color:#b95426}.smallnote{font-size:11px;color:#657085;margin-top:14px}
+    #gameover{display:none}
+    .telegram{display:none}
+    @media (min-width:600px){#gameWrap{height:930px;border-radius:22px}}
   </style>
 </head>
 <body>
-<div id="game"></div>
-<div class="hud">
-  <div class="top">
-    <div class="panel"><div class="title">YANGON YBS 3D</div><div class="small" id="routeText">Route 1 • မနက်ပိုင်း</div><div class="stat" id="mission">မှတ်တိုင်သို့ မောင်းပါ</div></div>
-    <div class="panel" style="text-align:right"><div class="small">Score</div><div class="stat" id="score">0</div><div class="small" id="speed">0 km/h</div><div class="small" id="status">Fuel 100% • လူ 0/40</div></div>
+<div id="app"><div id="gameWrap">
+  <canvas id="canvas"></canvas>
+  <div class="hud">
+    <div class="topbar">
+      <div class="pill"><div class="brand">MGC 195 YANGON RUSH</div><div class="muted">ရန်ကုန်လမ်းမ • Endless Mini Race</div></div>
+      <div style="display:flex;align-items:flex-start;gap:7px"><div class="pill" style="text-align:right"><div class="muted">SCORE</div><div class="value" id="score">0</div></div><button id="pause">Ⅱ</button></div>
+    </div>
+    <div class="hint" id="hint">ဘယ် / ညာကိုနှိပ်ပြီး Lane ပြောင်းပါ</div>
+    <div class="bottom"><button class="control left" id="left">◀ ဘယ်</button><button class="control right" id="right">ညာ ▶</button></div>
   </div>
-  <div id="message"></div>
-  <div class="legend">WASD / Arrow Keys = မောင်းရန် • Space = Brake<br>အနီမီးတွင် ရပ်ပါ • မှတ်တိုင်အဝါရောင်နေရာတွင် ရပ်ပါ</div>
-  <div id="controls"><button class="ctrl" id="left">◀</button><button class="ctrl gas" id="gas">GAS ▲</button><button class="ctrl wide" id="brake">BRAKE</button><button class="ctrl" id="right">▶</button></div>
-  <div class="actionbar"><button id="pauseBtn">⏸ Pause</button><button id="restartBtn">↻ Restart</button></div>
-</div>
-<div id="start"><div class="card"><h1>Yangon YBS 3D</h1><div class="tag">ရန်ကုန်မြို့လမ်းမပေါ်က Route Driver</div><p>YBS ဘတ်စ်ကားမောင်းပြီး ခရီးသည်တွေကို မှတ်တိုင်တစ်ခုချင်းစီ ပို့ပါ။ မီးနီဖြတ်ရင် ဒဏ်ကြေး၊ မှတ်တိုင်ကျော်ရင် Score လျော့ပါမယ်။</p><select id="route"><option value="1">YBS Route 1 — မြို့တွင်း</option><option value="7">YBS Route 7 — ရုံးသွားရုံးပြန်</option><option value="21">YBS Route 21 — မနက်ခင်း Rush Hour</option><option value="27">YBS Route 27 — ညနေခင်းလမ်းမ (Night)</option></select><button id="startBtn">မောင်းနှင်မည်</button></div></div>
-<script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-
-const scene=new THREE.Scene(); scene.background=new THREE.Color(0x8bd3f7); scene.fog=new THREE.Fog(0x8bd3f7,50,190);
-const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,400); camera.position.set(0,5.4,10);
-const renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(innerWidth,innerHeight); renderer.shadowMap.enabled=true; document.querySelector('#game').appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xcceeff,0x5c4a3a,2.3)); const sun=new THREE.DirectionalLight(0xfff0bd,2.2); sun.position.set(-30,50,25); sun.castShadow=true; scene.add(sun);
-const world=new THREE.Group(); scene.add(world);
-const roadWidth=13, roadLen=280;
-function mat(c){return new THREE.MeshStandardMaterial({color:c,roughness:.85})}
-const road=new THREE.Mesh(new THREE.PlaneGeometry(roadWidth,roadLen),mat(0x343a40)); road.rotation.x=-Math.PI/2; road.position.z=-95; road.receiveShadow=true; world.add(road);
-const sidewalk=mat(0x9b9b91); for(const x of [-8,8]){let s=new THREE.Mesh(new THREE.BoxGeometry(2,0.22,roadLen),sidewalk);s.position.set(x,.1,-95);world.add(s)}
-const lineMat=mat(0xffe46b); for(let z=38;z>-235;z-=10){let l=new THREE.Mesh(new THREE.BoxGeometry(.16,.025,5),lineMat);l.position.set(0,.03,z);world.add(l)}
-function box(x,y,z,w,h,d,c){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;world.add(o);return o}
-// Yangon-style streetscape
-for(let z=30;z>-245;z-=13){for(const side of [-1,1]){const h=3+Math.random()*10,w=4+Math.random()*5; box(side*(11+Math.random()*6),h/2-.02,z,w,h,8,[0xd8b4a0,0xf3c677,0xb9d6c2,0xc8c4e0][Math.floor(Math.random()*4)]); if(Math.random()>.5)box(side*(11+Math.random()*6),h+.5,z,.8,.3,8,0x9c3f3f)}}
-// trees and lamp posts
-for(let z=27;z>-235;z-=18){for(const side of [-1,1]){const x=side*9.1;box(x,.8,z,.25,1.6,.25,0x71513c);const crown=new THREE.Mesh(new THREE.SphereGeometry(1.3,12,8),mat(0x3f9148));crown.position.set(x,2.4,z);world.add(crown)}}
-// bus stop markers
-const stops=[]; for(let i=0;i<7;i++){const z=8-i*34;const m=box(5.7,.08,z,1.5,.15,5,0xffc857);stops.push({z,done:false,mesh:m})}
-// traffic lights
-const lights=[]; for(let i=0;i<4;i++){const z=-18-i*60; const pole=box(-6.5,2,z,.18,4,.18,0x252a34); const red=new THREE.Mesh(new THREE.SphereGeometry(.3,12,8),mat(0xe63946));red.position.set(-6.5,4,z);world.add(red);const green=new THREE.Mesh(new THREE.SphereGeometry(.3,12,8),mat(0x273b2d));green.position.set(-6.5,3.2,z);world.add(green);lights.push({z,red,green,redOn:true})}
-// bus
-const bus=new THREE.Group(); bus.position.set(0,0,28); world.add(bus); const body=box(0,1.35,28,3.3,2.5,7.2,0x138a9d); // box() adds to world, move into bus manually
-world.remove(body); bus.add(body); body.position.set(0,1.35,0); const roof= new THREE.Mesh(new THREE.BoxGeometry(3.15,.25,6.8),mat(0xe8c547));roof.position.set(0,2.7,0);bus.add(roof); for(const x of [-1.68,1.68]){const wheelMat=mat(0x181818);for(const z of [-2.2,2.2]){const wh=new THREE.Mesh(new THREE.CylinderGeometry(.52,.52,.3,16),wheelMat);wh.rotation.z=Math.PI/2;wh.position.set(x*.98,.55,z);bus.add(wh)}}
-// other traffic
-const cars=[]; for(let i=0;i<8;i++){const c=box((Math.random()>.5?1:-1)*(2.1+Math.random()*2),.65,15-i*29,1.5,1.1,3.2,[0xe76f51,0x457b9d,0xf4a261,0x8338ec][i%4]);cars.push(c)}
-const keys={}; addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.code==='Space')keys.space=true});addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;if(e.code==='Space')keys.space=false});
-  let left=false,right=false,gas=false,brake=false,started=false,paused=false,score=0,route=1,velocity=0,last=performance.now(),fuel=100,passengers=0,served=0,collisionLock=0;
-  function bind(id,down,up){const el=document.querySelector(id);el.addEventListener('pointerdown',e=>{e.preventDefault();el.setPointerCapture?.(e.pointerId);down()});['pointerup','pointercancel','pointerleave'].forEach(t=>el.addEventListener(t,e=>{e.preventDefault();up()}))}bind('#left',()=>left=true,()=>left=false);bind('#right',()=>right=true,()=>right=false);bind('#gas',()=>gas=true,()=>gas=false);bind('#brake',()=>brake=true,()=>brake=false);
-const msg=document.querySelector('#message');function say(t){msg.textContent=t;msg.classList.add('show');clearTimeout(say.t);say.t=setTimeout(()=>msg.classList.remove('show'),1800)}
-  function resetGame(){score=0;fuel=100;passengers=0;served=0;velocity=0;paused=false;collisionLock=0;bus.position.set(0,0,28);stops.forEach(s=>s.done=false);document.querySelector('#pauseBtn').textContent='⏸ Pause';}
-  function start(){resetGame();route=+document.querySelector('#route').value;document.querySelector('#routeText').textContent=`Route ${route} • ${route===27?'ညနေခင်း':'မနက်ပိုင်း'}`;document.querySelector('#start').style.display='none';started=true;say('ခရီးစဉ်စတင်ပါပြီ — အန္တရာယ်ကင်းကင်းမောင်းပါ');}
-  document.querySelector('#startBtn').onclick=start;
-  document.querySelector('#pauseBtn').onclick=()=>{if(!started)return;paused=!paused;document.querySelector('#pauseBtn').textContent=paused?'▶ Resume':'⏸ Pause';say(paused?'Game ခဏရပ်ထားပါတယ်':'ဆက်လက်မောင်းနှင်ပါ');};
-  document.querySelector('#restartBtn').onclick=()=>{if(started){resetGame();say('Route ကို ပြန်စပါပြီ');}else{document.querySelector('#start').style.display='grid';}};
-  function update(dt){if(!started||paused)return; const accelerate=keys.w||keys.arrowup||gas; const back=keys.s||keys.arrowdown; const steer=keys.a||keys.arrowleft||left? -1 : keys.d||keys.arrowright||right?1:0; if(accelerate&&fuel>0)velocity=Math.min(24,velocity+14*dt);else velocity=Math.max(0,velocity-4*dt);if(back)velocity=Math.max(0,velocity-10*dt);if(brake||keys.space)velocity=Math.max(0,velocity-22*dt);bus.position.x+=steer*8*dt;bus.position.x=THREE.MathUtils.clamp(bus.position.x,-4.3,4.3);bus.position.z-=velocity*dt;fuel=Math.max(0,fuel-velocity*dt*.055);if(fuel<=0&&velocity<.2){say('ဆီကုန်သွားပါပြီ — Restart လုပ်ပါ');started=false;document.querySelector('#start').style.display='grid';}
-  // recycle world to create an endless Yangon road
-  if(bus.position.z<-110){const shift=220;bus.position.z+=shift;world.position.z+=shift;stops.forEach(s=>s.z+=shift);lights.forEach(l=>l.z+=shift);cars.forEach(c=>c.position.z+=shift)}
-  // stop logic
-  const nearest=stops.reduce((a,b)=>Math.abs(b.z-bus.position.z)<Math.abs(a.z-bus.position.z)?b:a,stops[0]); if(!nearest.done&&Math.abs(nearest.z-bus.position.z)<3){if(velocity<1.2){nearest.done=true;score+=100;served++;passengers=Math.min(40,passengers+Math.floor(8+Math.random()*13));fuel=Math.min(100,fuel+4);say(`မှတ်တိုင်ရပ်ပါပြီ — ခရီးသည်တင်ပြီး +100`);}else if(Math.abs(nearest.z-bus.position.z)<.8){score=Math.max(0,score-30);nearest.done=true;say('မှတ်တိုင်ကျော်သွားပါတယ် -30')}}
-  lights.forEach(l=>{l.redOn=Math.floor((performance.now()/1000+l.z)*.25)%2===0;l.red.material.color.set(l.redOn?0xe63946:0x4c1820);l.green.material.color.set(l.redOn?0x263329:0x41d36a);if(l.redOn&&Math.abs(l.z-bus.position.z)<3&&velocity>5){score=Math.max(0,score-50);say('မီးနီဖြတ်မောင်းမှု -50')}});
-  cars.forEach((c,i)=>{c.position.z+=Math.sin(performance.now()/1200+i)*dt*1.5;if(c.position.z>bus.position.z+45)c.position.z=bus.position.z-180;if(Math.abs(c.position.x-bus.position.x)<2.2&&Math.abs(c.position.z-bus.position.z)<3&&collisionLock<=0){velocity*=.3;score=Math.max(0,score-20);collisionLock=1.5;say('ယာဉ်တိုက်မိပါသည် -20')}});collisionLock=Math.max(0,collisionLock-dt);
-  const night=route===27||Math.sin(performance.now()/30000)>.7;scene.background.set(night?0x17233f:0x8bd3f7);scene.fog.color.set(night?0x17233f:0x8bd3f7);sun.intensity=night?0.65:2.2;camera.position.x=THREE.MathUtils.lerp(camera.position.x,bus.position.x*.45,dt*5);camera.lookAt(bus.position.x*.4,1,bus.position.z-12);document.querySelector('#score').textContent=score;document.querySelector('#speed').textContent=Math.round(velocity*4)+' km/h';document.querySelector('#status').textContent=`Fuel ${Math.round(fuel)}% • လူ ${passengers}/40 • ${served}/7 မှတ်တိုင်`;document.querySelector('#mission').textContent=served>=7?'Route ပြီးပါပြီ — ဆု +500':'မှတ်တိုင်အဝါရောင်နေရာမှာ ရပ်ပါ';if(served>=7){score+=500;served=0;stops.forEach(s=>s.done=false);say('Route ပြီးမြောက်ပါပြီ +500');}}
-function loop(t){const dt=Math.min((t-last)/1000,.05);last=t;update(dt);renderer.render(scene,camera);requestAnimationFrame(loop)} requestAnimationFrame(loop);
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+  <section id="start"><div class="card"><h1>MGC 195</h1><div class="sub">YANGON RUSH</div><p><b>ရန်ကုန်လမ်းမပေါ်မှာ အကြာဆုံးမတိုက်ဘဲ မောင်းပါ။</b><br>ကားတွေကို ရှောင်ပါ၊ Coin စုပါ၊ Traffic Light ကို သတိထားပါ။ အချိန်ကြာလေလေ အရှိန်မြန်လေလေပါ။</p><div class="stats"><div class="statbox"><span>အမြင့်ဆုံး Score</span><b id="startHigh">0</b></div><div class="statbox"><span>Control</span><b>◀ ▶</b></div></div><button class="primary" id="startBtn">RACE စတင်မည်</button><div class="smallnote">ဖုန်းမှာ ဘယ်/ညာခလုတ်နှိပ်ပါ သို့မဟုတ် Screen ကို ဘယ်/ညာ Swipe လုပ်ပါ</div></div></section>
+  <section id="gameover"><div class="card"><h2>ကားတိုက်သွားပါပြီ!</h2><div class="sub">ဒီတစ်ပွဲပြီးပါပြီ</div><div class="stats"><div class="statbox"><span>သင့် Score</span><b id="finalScore">0</b></div><div class="statbox"><span>အမြင့်ဆုံး</span><b id="finalHigh">0</b></div></div><p id="resultText">နောက်တစ်ကြိမ်မှာ ပိုဝေးဝေးမောင်းပြီး Score မြှင့်ပါ။</p><button class="primary" id="againBtn">ထပ်မံကစားမည်</button></div></section>
+</div></div>
+<script>
+(() => {
+  const tg = window.Telegram?.WebApp; tg?.ready(); tg?.expand();
+  const canvas=document.getElementById('canvas'), ctx=canvas.getContext('2d');
+  const wrap=document.getElementById('gameWrap');
+  let W=0,H=0,dpr=1, raf=0, last=0, running=false, paused=false, score=0, distance=0, speed=4.8, spawn=0, flash=0;
+  let lane=1, targetLane=1, coins=0, nearMiss=0, roadOffset=0;
+  const lanes=3, obstacles=[], pickups=[], lights=[];
+  const highKey='mgc195_yangon_rush_high';
+  let high=Number(localStorage.getItem(highKey)||0);
+  document.getElementById('startHigh').textContent=high;
+  function resize(){dpr=Math.min(devicePixelRatio||1,2);W=wrap.clientWidth;H=wrap.clientHeight;canvas.width=W*dpr;canvas.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)} addEventListener('resize',resize); resize();
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const laneX=i=>W*.5+(i-1)*W*.24;
+  function rounded(x,y,w,h,r,fill){ctx.fillStyle=fill;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
+  function sky(){
+    const g=ctx.createLinearGradient(0,0,0,H*.55);g.addColorStop(0,'#7cc7e8');g.addColorStop(1,'#d4e6cd');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    // Yangon skyline
+    const base=H*.30; for(let i=0;i<13;i++){const x=i*W/12-20,h=30+(i%5)*18;ctx.fillStyle=i%3?'#a7a9a7':'#8e999d';ctx.fillRect(x,base-h,42,h);ctx.fillStyle='#f7cc68';for(let y=base-h+9;y<base-5;y+=13)ctx.fillRect(x+8,y,5,5)}
+    ctx.fillStyle='#f3bd43';ctx.beginPath();ctx.arc(W*.79,base-30,22,Math.PI,0);ctx.fill();ctx.fillStyle='#6b7d79';ctx.fillRect(W*.78,base-30,4,30);
+  }
+  function road(){
+    const horizon=H*.29;ctx.fillStyle='#333849';ctx.fillRect(W*.12,horizon,W*.76,H-horizon);
+    ctx.fillStyle='#202638';ctx.beginPath();ctx.moveTo(W*.12,horizon);ctx.lineTo(W*.88,horizon);ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fill();
+    // side curbs
+    ctx.strokeStyle='#e7b65b';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(W*.12,horizon);ctx.lineTo(0,H);ctx.moveTo(W*.88,horizon);ctx.lineTo(W,H);ctx.stroke();
+    const bands=16;for(let i=0;i<bands;i++){const t=((i/bands*1.5+roadOffset)%1);const y=horizon+(H-horizon)*t;const half=6+W*.44*t;ctx.strokeStyle='#dfe4df';ctx.lineWidth=Math.max(2,6*t);for(let j=1;j<3;j++){const x=W*.5-half+j*(half*2/3);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+Math.max(3,22*t));ctx.stroke()}}
+    // crosswalk near traffic light
+    for(let i=0;i<5;i++){ctx.fillStyle='#f5f1da';ctx.fillRect(W*.25+i*W*.1,H*.36,W*.055,8)}
+  }
+  function drawCar(x,y,w,h,color,kind='car',player=false){
+    ctx.save();ctx.translate(x,y);ctx.shadowColor='#0008';ctx.shadowBlur=12;ctx.shadowOffsetY=7;
+    rounded(-w/2,-h/2,w,h,Math.max(7,w*.16),color);ctx.shadowColor='transparent';
+    rounded(-w*.33,-h*.28,w*.66,h*.27,5,player?'#9bd8e9':'#b7d5df');
+    ctx.fillStyle='#24253a';ctx.fillRect(-w*.43,h*.18,w*.15,h*.13);ctx.fillRect(w*.28,h*.18,w*.15,h*.13);
+    ctx.fillStyle='#fff2ab';ctx.fillRect(-w*.34,-h*.43,w*.18,h*.08);ctx.fillRect(w*.16,-h*.43,w*.18,h*.08);
+    if(player){ctx.fillStyle='#ffd166';ctx.fillRect(-w*.18,-h*.43,w*.36,h*.1);ctx.fillStyle='#ef476f';ctx.fillRect(-w*.43,0,w*.86,h*.1)}
+    ctx.restore();
+  }
+  function spawnObject(){
+    const ln=Math.floor(Math.random()*lanes);const y=H*.27;const type=Math.random()<.66?'car':Math.random()<.5?'cone':'taxi';obstacles.push({lane:ln,y,type,scale:.45,hit:false});
+    if(Math.random()<.55){const cLane=Math.floor(Math.random()*lanes);pickups.push({lane:cLane,y:y-120-Math.random()*90,spin:0})}
+  }
+  function drawObjects(){
+    const playerY=H*.78; for(const o of obstacles){const t=clamp((o.y-H*.27)/(playerY-H*.27),0,1);const w=42+40*t,h=78+58*t,x=laneX(o.lane); if(o.type==='cone'){ctx.fillStyle='#ff874e';ctx.beginPath();ctx.moveTo(x,o.y-h/2);ctx.lineTo(x-w*.4,o.y+h/2);ctx.lineTo(x+w*.4,o.y+h/2);ctx.closePath();ctx.fill();ctx.fillStyle='#fff2ce';ctx.fillRect(x-w*.25,o.y,w*.5,7)}else drawCar(x,o.y,w,h,o.type==='taxi'?'#e2b93d':['#ef476f','#4d8bd6','#9b5de5'][Math.floor((o.y/20)%3)]);
+    }
+    for(const p of pickups){const t=clamp((p.y-H*.27)/(playerY-H*.27),0,1),r=10+8*t;const x=laneX(p.lane);ctx.save();ctx.translate(x,p.y);ctx.rotate(p.spin);ctx.fillStyle='#ffd166';ctx.strokeStyle='#ff9f1c';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle='#fff7c2';ctx.font=`bold ${r}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('$',0,1);ctx.restore()}
+  }
+  function drawTraffic(){const x=W*.88-24,y=H*.25;rounded(x,y,38,94,12,'#242331');['#ef476f','#ffd166','#20c997'].forEach((c,i)=>{ctx.fillStyle=c;ctx.beginPath();ctx.arc(x+19,y+18+i*28,8,0,Math.PI*2);ctx.fill()})}
+  function draw(){ctx.clearRect(0,0,W,H);sky();road();drawTraffic();drawObjects();const px=laneX(lane),py=H*.78;drawCar(px,py,58,104,'#1565c0','bus',true);ctx.fillStyle='#fff';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.fillText('YBS',px,py+4);}
+  function setScore(n){score=Math.max(0,Math.floor(n));document.getElementById('score').textContent=score}
+  function finish(){running=false;cancelAnimationFrame(raf);if(score>high){high=score;localStorage.setItem(highKey,high)}document.getElementById('finalScore').textContent=score;document.getElementById('finalHigh').textContent=high;document.getElementById('gameover').style.display='grid';try{tg?.sendData(JSON.stringify({game:'MGC195YangonRush',score,coins,distance:Math.floor(distance)}))}catch(e){}}
+  function move(dir){if(!running||paused)return;targetLane=clamp(targetLane+dir,0,2);}
+  function start(){document.getElementById('start').style.display='none';document.getElementById('gameover').style.display='none';lane=targetLane=1;score=0;coins=0;distance=0;speed=4.8;spawn=0;roadOffset=0;obstacles.length=0;pickups.length=0;running=true;paused=false;document.getElementById('pause').textContent='Ⅱ';showHint();last=performance.now();raf=requestAnimationFrame(loop)}
+  function showHint(){const h=document.getElementById('hint');h.classList.add('show');clearTimeout(showHint.t);showHint.t=setTimeout(()=>h.classList.remove('show'),2600)}
+  function loop(now){if(!running)return;const dt=Math.min(.035,(now-last)/1000);last=now;if(!paused){distance+=speed*dt;speed=Math.min(12,speed+dt*.06);roadOffset=(roadOffset+dt*speed*.09)%1;lane+=(targetLane-lane)*Math.min(1,dt*14);spawn-=dt;if(spawn<=0){spawnObject();spawn=Math.max(.42,1.15-distance/500)}for(const o of obstacles)o.y+=speed*dt*62;for(const p of pickups){p.y+=speed*dt*62;p.spin+=dt*3.5}for(let i=obstacles.length-1;i>=0;i--){const o=obstacles[i];if(o.y>H*.9)obstacles.splice(i,1);else if(!o.hit&&o.y>H*.70&&o.y<H*.85&&Math.abs(o.lane-Math.round(lane))<.45){o.hit=true;flash=1;finish();return}}for(let i=pickups.length-1;i>=0;i--){const p=pickups[i];if(p.y>H*.9)pickups.splice(i,1);else if(p.y>H*.70&&p.y<H*.85&&p.lane===Math.round(lane)){coins++;setScore(score+25);pickups.splice(i,1)}}setScore(distance*4+coins*25);flash=Math.max(0,flash-dt)}draw();if(flash>0){ctx.fillStyle=`rgba(255,40,60,${flash*.18})`;ctx.fillRect(0,0,W,H)}raf=requestAnimationFrame(loop)}
+  function togglePause(){if(!running)return;paused=!paused;document.getElementById('pause').textContent=paused?'▶':'Ⅱ';if(!paused){last=performance.now();raf=requestAnimationFrame(loop)}}
+  document.getElementById('startBtn').onclick=start;document.getElementById('againBtn').onclick=start;document.getElementById('pause').onclick=togglePause;document.getElementById('left').onclick=()=>move(-1);document.getElementById('right').onclick=()=>move(1);
+  addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key.toLowerCase()==='a')move(-1);if(e.key==='ArrowRight'||e.key.toLowerCase()==='d')move(1);if(e.code==='Space')togglePause()});
+  let touchX=0;canvas.addEventListener('pointerdown',e=>touchX=e.clientX);canvas.addEventListener('pointerup',e=>{const dx=e.clientX-touchX;if(Math.abs(dx)>25)move(dx<0?-1:1)});
+  draw();
+})();
 </script>
 </body>
 </html>
