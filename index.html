@@ -21,6 +21,7 @@
     #controls{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:12px;pointer-events:auto}
     .ctrl{width:62px;height:54px;border-radius:17px;background:#111c;color:white;font-size:25px;border:1px solid #fff3;box-shadow:0 6px 18px #0004}.ctrl.wide{font-size:14px;width:90px}
     .legend{position:absolute;bottom:12px;left:12px;font-size:11px;background:#08101ccc;padding:8px 10px;border-radius:10px;max-width:260px}
+    .actionbar{position:absolute;right:12px;bottom:12px;display:flex;gap:8px;pointer-events:auto}.actionbar button{padding:8px 10px;background:#111c;border:1px solid #fff3;box-shadow:none;font-size:12px}
     @media(max-width:600px){.top{padding:8px}.panel{padding:8px 10px}.title{font-size:13px}.small{font-size:10px}.ctrl{width:58px;height:50px}}
   </style>
 </head>
@@ -29,13 +30,14 @@
 <div class="hud">
   <div class="top">
     <div class="panel"><div class="title">YANGON YBS 3D</div><div class="small" id="routeText">Route 1 • မနက်ပိုင်း</div><div class="stat" id="mission">မှတ်တိုင်သို့ မောင်းပါ</div></div>
-    <div class="panel" style="text-align:right"><div class="small">Score</div><div class="stat" id="score">0</div><div class="small" id="speed">0 km/h</div></div>
+    <div class="panel" style="text-align:right"><div class="small">Score</div><div class="stat" id="score">0</div><div class="small" id="speed">0 km/h</div><div class="small" id="status">Fuel 100% • လူ 0/40</div></div>
   </div>
   <div id="message"></div>
   <div class="legend">WASD / Arrow Keys = မောင်းရန် • Space = Brake<br>အနီမီးတွင် ရပ်ပါ • မှတ်တိုင်အဝါရောင်နေရာတွင် ရပ်ပါ</div>
   <div id="controls"><button class="ctrl" id="left">◀</button><button class="ctrl wide" id="brake">BRAKE</button><button class="ctrl" id="right">▶</button></div>
+  <div class="actionbar"><button id="pauseBtn">⏸ Pause</button><button id="restartBtn">↻ Restart</button></div>
 </div>
-<div id="start"><div class="card"><h1>Yangon YBS 3D</h1><div class="tag">ရန်ကုန်မြို့လမ်းမပေါ်က Route Driver</div><p>YBS ဘတ်စ်ကားမောင်းပြီး ခရီးသည်တွေကို မှတ်တိုင်တစ်ခုချင်းစီ ပို့ပါ။ မီးနီဖြတ်ရင် ဒဏ်ကြေး၊ မှတ်တိုင်ကျော်ရင် Score လျော့ပါမယ်။</p><select id="route"><option value="1">YBS Route 1 — မြို့တွင်း</option><option value="7">YBS Route 7 — ရုံးသွားရုံးပြန်</option><option value="21">YBS Route 21 — မနက်ခင်း Rush Hour</option><option value="27">YBS Route 27 — ညနေခင်းလမ်းမ</option></select><button id="startBtn">မောင်းနှင်မည်</button></div></div>
+<div id="start"><div class="card"><h1>Yangon YBS 3D</h1><div class="tag">ရန်ကုန်မြို့လမ်းမပေါ်က Route Driver</div><p>YBS ဘတ်စ်ကားမောင်းပြီး ခရီးသည်တွေကို မှတ်တိုင်တစ်ခုချင်းစီ ပို့ပါ။ မီးနီဖြတ်ရင် ဒဏ်ကြေး၊ မှတ်တိုင်ကျော်ရင် Score လျော့ပါမယ်။</p><select id="route"><option value="1">YBS Route 1 — မြို့တွင်း</option><option value="7">YBS Route 7 — ရုံးသွားရုံးပြန်</option><option value="21">YBS Route 21 — မနက်ခင်း Rush Hour</option><option value="27">YBS Route 27 — ညနေခင်းလမ်းမ (Night)</option></select><button id="startBtn">မောင်းနှင်မည်</button></div></div>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 
@@ -64,21 +66,23 @@ world.remove(body); bus.add(body); body.position.set(0,1.35,0); const roof= new 
 // other traffic
 const cars=[]; for(let i=0;i<8;i++){const c=box((Math.random()>.5?1:-1)*(2.1+Math.random()*2),.65,15-i*29,1.5,1.1,3.2,[0xe76f51,0x457b9d,0xf4a261,0x8338ec][i%4]);cars.push(c)}
 const keys={}; addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.code==='Space')keys.space=true});addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;if(e.code==='Space')keys.space=false});
-let left=false,right=false,brake=false,started=false,score=0,route=1,velocity=0,last=performance.now(),targetStop=0;
+  let left=false,right=false,brake=false,started=false,paused=false,score=0,route=1,velocity=0,last=performance.now(),fuel=100,passengers=0,served=0,collisionLock=0;
 function bind(id,down,up){const el=document.querySelector(id);el.addEventListener('pointerdown',e=>{e.preventDefault();down()});['pointerup','pointercancel','pointerleave'].forEach(t=>el.addEventListener(t,e=>{e.preventDefault();up()}))}bind('#left',()=>left=true,()=>left=false);bind('#right',()=>right=true,()=>right=false);bind('#brake',()=>brake=true,()=>brake=false);
 const msg=document.querySelector('#message');function say(t){msg.textContent=t;msg.classList.add('show');clearTimeout(say.t);say.t=setTimeout(()=>msg.classList.remove('show'),1800)}
-function start(){route=+document.querySelector('#route').value;document.querySelector('#routeText').textContent=`Route ${route} • ${route===27?'ညနေခင်း':'မနက်ပိုင်း'}`;document.querySelector('#start').style.display='none';started=true;say('ခရီးစဉ်စတင်ပါပြီ — အန္တရာယ်ကင်းကင်းမောင်းပါ');}
-document.querySelector('#startBtn').onclick=start;
-function update(dt){if(!started)return; const accelerate=keys.w||keys.arrowup; const back=keys.s||keys.arrowdown; const steer=keys.a||keys.arrowleft||left? -1 : keys.d||keys.arrowright||right?1:0; if(accelerate)velocity=Math.min(24,velocity+14*dt);else velocity=Math.max(0,velocity-4*dt);if(back)velocity=Math.max(0,velocity-10*dt);if(brake||keys.space)velocity=Math.max(0,velocity-22*dt);bus.position.x+=steer*8*dt;bus.position.x=THREE.MathUtils.clamp(bus.position.x,-4.3,4.3);bus.position.z-=velocity*dt;
+  function resetGame(){score=0;fuel=100;passengers=0;served=0;velocity=0;paused=false;collisionLock=0;bus.position.set(0,0,28);stops.forEach(s=>s.done=false);document.querySelector('#pauseBtn').textContent='⏸ Pause';}
+  function start(){resetGame();route=+document.querySelector('#route').value;document.querySelector('#routeText').textContent=`Route ${route} • ${route===27?'ညနေခင်း':'မနက်ပိုင်း'}`;document.querySelector('#start').style.display='none';started=true;say('ခရီးစဉ်စတင်ပါပြီ — အန္တရာယ်ကင်းကင်းမောင်းပါ');}
+  document.querySelector('#startBtn').onclick=start;
+  document.querySelector('#pauseBtn').onclick=()=>{if(!started)return;paused=!paused;document.querySelector('#pauseBtn').textContent=paused?'▶ Resume':'⏸ Pause';say(paused?'Game ခဏရပ်ထားပါတယ်':'ဆက်လက်မောင်းနှင်ပါ');};
+  document.querySelector('#restartBtn').onclick=()=>{if(started){resetGame();say('Route ကို ပြန်စပါပြီ');}else{document.querySelector('#start').style.display='grid';}};
+  function update(dt){if(!started||paused)return; const accelerate=keys.w||keys.arrowup; const back=keys.s||keys.arrowdown; const steer=keys.a||keys.arrowleft||left? -1 : keys.d||keys.arrowright||right?1:0; if(accelerate&&fuel>0)velocity=Math.min(24,velocity+14*dt);else velocity=Math.max(0,velocity-4*dt);if(back)velocity=Math.max(0,velocity-10*dt);if(brake||keys.space)velocity=Math.max(0,velocity-22*dt);bus.position.x+=steer*8*dt;bus.position.x=THREE.MathUtils.clamp(bus.position.x,-4.3,4.3);bus.position.z-=velocity*dt;fuel=Math.max(0,fuel-velocity*dt*.055);if(fuel<=0&&velocity<.2){say('ဆီကုန်သွားပါပြီ — Restart လုပ်ပါ');started=false;document.querySelector('#start').style.display='grid';}
   // recycle world to create an endless Yangon road
   if(bus.position.z<-110){const shift=220;bus.position.z+=shift;world.position.z+=shift;stops.forEach(s=>s.z+=shift);lights.forEach(l=>l.z+=shift);cars.forEach(c=>c.position.z+=shift)}
   // stop logic
-  const nearest=stops.reduce((a,b)=>Math.abs(b.z-bus.position.z)<Math.abs(a.z-bus.position.z)?b:a,stops[0]); if(!nearest.done&&Math.abs(nearest.z-bus.position.z)<3){if(velocity<1.2){nearest.done=true;score+=100;say('မှတ်တိုင်ရပ်ပြီး ခရီးသည်တင်ပြီးပါပြီ +100');}else if(Math.abs(nearest.z-bus.position.z)<.8){score=Math.max(0,score-30);nearest.done=true;say('မှတ်တိုင်ကျော်သွားပါတယ် -30')}}
+  const nearest=stops.reduce((a,b)=>Math.abs(b.z-bus.position.z)<Math.abs(a.z-bus.position.z)?b:a,stops[0]); if(!nearest.done&&Math.abs(nearest.z-bus.position.z)<3){if(velocity<1.2){nearest.done=true;score+=100;served++;passengers=Math.min(40,passengers+Math.floor(8+Math.random()*13));fuel=Math.min(100,fuel+4);say(`မှတ်တိုင်ရပ်ပါပြီ — ခရီးသည်တင်ပြီး +100`);}else if(Math.abs(nearest.z-bus.position.z)<.8){score=Math.max(0,score-30);nearest.done=true;say('မှတ်တိုင်ကျော်သွားပါတယ် -30')}}
   lights.forEach(l=>{l.redOn=Math.floor((performance.now()/1000+l.z)*.25)%2===0;l.red.material.color.set(l.redOn?0xe63946:0x4c1820);l.green.material.color.set(l.redOn?0x263329:0x41d36a);if(l.redOn&&Math.abs(l.z-bus.position.z)<3&&velocity>5){score=Math.max(0,score-50);say('မီးနီဖြတ်မောင်းမှု -50')}});
-  cars.forEach((c,i)=>{c.position.z+=Math.sin(performance.now()/1200+i)*dt*1.5;if(c.position.z>bus.position.z+45)c.position.z=bus.position.z-180;if(Math.abs(c.position.x-bus.position.x)<2.2&&Math.abs(c.position.z-bus.position.z)<3){velocity*=.3;score=Math.max(0,score-20);say('ယာဉ်တိုက်မိပါသည် -20')}});
-  camera.position.x=THREE.MathUtils.lerp(camera.position.x,bus.position.x*.45,dt*5);camera.lookAt(bus.position.x*.4,1,bus.position.z-12);document.querySelector('#score').textContent=score;document.querySelector('#speed').textContent=Math.round(velocity*4)+' km/h';document.querySelector('#mission').textContent=nearest.done?'နောက်မှတ်တိုင်သို့ ဆက်မောင်းပါ':'အဝါရောင်မှတ်တိုင်မှာ ရပ်ပါ';}
+  cars.forEach((c,i)=>{c.position.z+=Math.sin(performance.now()/1200+i)*dt*1.5;if(c.position.z>bus.position.z+45)c.position.z=bus.position.z-180;if(Math.abs(c.position.x-bus.position.x)<2.2&&Math.abs(c.position.z-bus.position.z)<3&&collisionLock<=0){velocity*=.3;score=Math.max(0,score-20);collisionLock=1.5;say('ယာဉ်တိုက်မိပါသည် -20')}});collisionLock=Math.max(0,collisionLock-dt);
+  const night=route===27||Math.sin(performance.now()/30000)>.7;scene.background.set(night?0x17233f:0x8bd3f7);scene.fog.color.set(night?0x17233f:0x8bd3f7);sun.intensity=night?0.65:2.2;camera.position.x=THREE.MathUtils.lerp(camera.position.x,bus.position.x*.45,dt*5);camera.lookAt(bus.position.x*.4,1,bus.position.z-12);document.querySelector('#score').textContent=score;document.querySelector('#speed').textContent=Math.round(velocity*4)+' km/h';document.querySelector('#status').textContent=`Fuel ${Math.round(fuel)}% • လူ ${passengers}/40 • ${served}/7 မှတ်တိုင်`;document.querySelector('#mission').textContent=served>=7?'Route ပြီးပါပြီ — ဆု +500':'မှတ်တိုင်အဝါရောင်နေရာမှာ ရပ်ပါ';if(served>=7){score+=500;served=0;stops.forEach(s=>s.done=false);say('Route ပြီးမြောက်ပါပြီ +500');}}
 function loop(t){const dt=Math.min((t-last)/1000,.05);last=t;update(dt);renderer.render(scene,camera);requestAnimationFrame(loop)} requestAnimationFrame(loop);
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 </script>
 </body>
-</html>
